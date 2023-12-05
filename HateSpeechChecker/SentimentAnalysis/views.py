@@ -9,6 +9,9 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+# get feedback randomly
+import random
+
 # nltk
 # import nltk 
 # nltk.download('wordnet')
@@ -140,6 +143,53 @@ text = ["I hate twitter",
         "May the Force be with you.",
         "Mr. Stark, I don't feel so good"]
 
+# Feedback lists
+positive_feedback = [
+    "Great positive message!",
+    "You spread positivity, keep it up!",
+    "Your words inspire others.",
+    "Fantastic contribution to the conversation!",
+    "You bring joy with your positive words.",
+    "Keep sharing your positive thoughts!",
+    "Your optimism is contagious.",
+    "I appreciate your positive mindset.",
+    "Your words make a positive impact.",
+    "Well done on promoting positivity!",
+    "Thanks for brightening my day with your words.",
+    "Your kindness shines through your message.",
+    "I love the positive energy in your words.",
+    "You have a gift for uplifting others.",
+    "Your positivity is a breath of fresh air.",
+    "I'm grateful for your positive contribution.",
+    "Your message radiates positivity.",
+    "You have a talent for spreading happiness.",
+    "Your optimism is needed in the world.",
+    "Your positive words make a difference."
+]
+
+negative_feedback = [
+    "Please reconsider your words, let's keep it positive.",
+    "Hate speech is not acceptable. Encourage respectful dialogue.",
+    "Negative words can hurt. Think about the impact of your message.",
+    "Consider expressing disagreement in a more constructive way.",
+    "Let's aim for a more positive and inclusive conversation.",
+    "Your words may be interpreted negatively. Choose them wisely.",
+    "Encourage understanding rather than negativity.",
+    "Negative speech can escalate conflicts. Choose peace.",
+    "Think about the consequences of spreading negativity.",
+    "Consider the impact of your words on others.",
+    "Try to find common ground and build bridges.",
+    "Negative comments can harm relationships. Choose kindness.",
+    "Promote constructive dialogue instead of negativity.",
+    "Encourage a positive and respectful environment.",
+    "Consider the feelings of others when expressing opinions.",
+    "Let's strive for harmony and understanding.",
+    "Choose words that build up rather than tear down.",
+    "Think about how your words contribute to the conversation.",
+    "Your message could be more positive. Encourage optimism.",
+    "Seek common ground and understanding in your communication."
+]
+
 def predictor(request):
     global text
     if request.method == 'POST':
@@ -157,20 +207,39 @@ def predictor(request):
                 'text': text_cont[key],
                 'sentiment': sent_cont[key]
             })
-
-        return render(request, 'predict.html', {'data_to_render': data_to_render})
         
-    result = predict(vectoriser, LRmodel, text)
-    content = result.to_dict()
-    text_cont = content['text']
-    sent_cont = content['sentiment']
-    
-    data_to_render = []
+        lastToList = data_to_render[-1]
+        print(lastToList['sentiment'] == 'posi')
+        if lastToList['sentiment'] == 'Positive':
+            lastToList['evaluated'] = True
+        else:
+            lastToList['evaluated'] = False
+        
+        # Randomly select feedback
+        lastToList['feedback'] = random.choice(positive_feedback) if lastToList['sentiment'] == 'Positive' else random.choice(negative_feedback)
+        
+        print(lastToList['evaluated'])
+        print(lastToList['feedback'])
 
-    for key in text_cont.keys():
-        data_to_render.append({
-            'key': key,
-            'text': text_cont[key],
-            'sentiment': sent_cont[key]
-        })
-    return render(request, 'predict.html', {'data_to_render': data_to_render})
+        return render(request, 'predict.html', {'currentText': lastToList})
+
+    return render(request, 'predict.html')
+
+
+def viewsPrevious(request):
+    if request.method == 'POST':
+        result = predict(vectoriser, LRmodel, text)
+        content = result.to_dict()
+        text_cont = content['text']
+        sent_cont = content['sentiment']
+        
+        previousTextList = []
+
+        for key in text_cont.keys():
+            previousTextList.append({
+                'key': key,
+                'text': text_cont[key],
+                'sentiment': sent_cont[key]
+            })
+        return render(request, 'predict.html', {'previous': previousTextList})
+    return render(request, 'predict.html')
